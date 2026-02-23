@@ -8,7 +8,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 
-RUN npx tsc
+RUN npx tsc --listEmittedFiles && ls -la dist/
 
 # Prune dev deps after build
 RUN npm prune --omit=dev
