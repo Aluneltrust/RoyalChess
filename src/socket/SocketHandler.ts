@@ -351,7 +351,7 @@ export function setupSocketHandlers(io: Server): void {
     // MAKE MOVE — Validate, then require micro-payment
     // ========================================================================
     socket.on('make_move', async (data: { from: string; to: string; promotion?: string }) => {
-      if (!rateCheck(socket, 'fire_shot')) return; // reuse fire_shot rate limit
+      if (!rateCheck(socket, 'fire_shot')) return;
 
       const game = gameManager.getGameBySocket(socket.id);
       if (!game) { socket.emit('error', { message: 'No active game' }); return; }
@@ -364,71 +364,21 @@ export function setupSocketHandlers(io: Server): void {
         return;
       }
 
-      // Tell the moving player: "your move is valid, now pay"
-      socket.emit('move_validated', {
-        san: result.san,
-        fen: result.fen,
-        isCheck: result.isCheck,
-        isCheckmate: result.isCheckmate,
-        isDraw: result.isDraw,
-        paymentRequired: result.paymentRequired,
-      });
-
-      // Tell opponent the move is pending payment
-      const slot = gameManager.getSlot(game, socket.id)!;
-      const oppSlot = gameManager.opponentSlot(slot);
-      io.to(game[oppSlot].socketId).emit('opponent_move_pending', {
-        message: `${game[slot].username} made a move — confirming payment...`,
-      });
-    });
-
-    // ========================================================================
-    // SUBMIT MOVE PAYMENT — After move validated, player sends TX
-    // ========================================================================
-    socket.on('submit_move_payment', async (data: { rawTxHex: string }) => {
-      if (!rateCheck(socket, 'submit_payment')) return;
-
-      const game = gameManager.getGameBySocket(socket.id);
-      if (!game || !game.pendingPayment || game.pendingPayment.type !== 'move') {
-        socket.emit('error', { message: 'No pending move payment' }); return;
-      }
-
-      const pp = game.pendingPayment;
-
-      // Verify & broadcast
-      const txResult = await verifyAndBroadcastTx(
-        data.rawTxHex, pp.toAddress, pp.amount, game.id, game[pp.fromSlot].address,
-      );
-
-      if (!txResult.verified) {
-        socket.emit('payment_verification', { success: false, error: txResult.error });
-        return;
-      }
-
-      // Apply the move
-      const confirm = gameManager.confirmMovePayment(socket.id, txResult.txid);
-      if (!confirm.success) {
-        socket.emit('payment_verification', { success: false, error: confirm.error });
-        return;
-      }
-
-      socket.emit('payment_verification', { success: true, txid: txResult.txid });
-
-      // Broadcast the confirmed move to both players
-      const move = confirm.move!;
-      io.to(game.white.socketId).emit('move_confirmed', {
+      // Move applied immediately — broadcast to both players
+      const move = result.move!;
+      const moveData = {
         san: move.san, from: move.from, to: move.to, color: move.color,
-        fen: confirm.fen, pot: game.pot, txid: txResult.txid,
-        isCheck: game.chess.isCheck(),
-      });
-      io.to(game.black.socketId).emit('move_confirmed', {
-        san: move.san, from: move.from, to: move.to, color: move.color,
-        fen: confirm.fen, pot: game.pot, txid: txResult.txid,
-        isCheck: game.chess.isCheck(),
-      });
+        fen: result.fen, pot: game.pot,
+        isCheck: result.isCheck || false,
+        capturePayment: result.capturePayment || null,
+      };
 
-      if (confirm.gameOver && confirm.gameOverResult) {
-        await handleGameEnd(game, confirm.gameOverResult);
+      io.to(game.white.socketId).emit('move_confirmed', moveData);
+      io.to(game.black.socketId).emit('move_confirmed', moveData);
+
+      // Handle game over
+      if (result.gameOver && result.gameOverResult) {
+        await handleGameEnd(game, result.gameOverResult);
       }
     });
 

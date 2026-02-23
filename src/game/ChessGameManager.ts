@@ -1,11 +1,13 @@
 // ============================================================================
-// CHESS GAME MANAGER — Server-authoritative, per-move micro-payment model
+// CHESS GAME MANAGER — Server-authoritative, capture-based payment model
 // ============================================================================
 // Flow:
-//   1. Both players pay initial wager → escrow
-//   2. Each move: moving player pays moveCost → escrow (pot grows every move)
-//   3. Game ends: winner gets pot minus platform cut
-//   4. Draws: pot split 50/50 minus platform cut
+//   1. Both players pay deposit → escrow (forfeit protection)
+//   2. Moves are FREE — no per-move cost
+//   3. Captures trigger payments: victim pays capturer (97%), platform gets 3%
+//   4. Checkmate: loser pays king value (100% of tier) to winner
+//   5. Game end: winner gets opponent's deposit minus 3% platform cut
+//   6. Draws: deposits returned minus 3% each
 // ============================================================================
 
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +18,7 @@ import {
   centsToSats,
   GameEndReason,
   PLATFORM_CUT_PERCENT,
+  PIECE_CAPTURE_PERCENT,
   applyPlatformCut,
   getCaptureCostSats,
   ChessPieceType,
@@ -51,17 +54,24 @@ export interface GameState {
   white: PlayerState;
   black: PlayerState;
   pot: number;               // accumulated sats in escrow
-  // Pending payment (wager or move cost)
+  // Pending deposit payment
   pendingPayment: {
-    type: 'wager' | 'move';
+    type: 'wager';
     fromSlot: PlayerSlot;
     amount: number;
     toAddress: string;       // escrow address
-    move?: string;           // SAN notation if move payment
-    moveFrom?: string;       // square (e.g., 'e2')
-    moveTo?: string;         // square (e.g., 'e4')
-    promotion?: string;      // promotion piece if applicable
   } | null;
+  // Track capture payments owed (victim → capturer)
+  capturePayments: {
+    fromSlot: PlayerSlot;    // victim pays
+    toSlot: PlayerSlot;      // capturer receives
+    piece: string;           // captured piece type (p/n/b/r/q/k)
+    amountSats: number;      // total amount
+    capturerSats: number;    // 97% to capturer
+    platformSats: number;    // 3% to platform
+    paid: boolean;
+    txid?: string;
+  }[];
   // Pause state (when player needs to add funds)
   pausedFor: PlayerSlot | null;
   pausedAt: number | null;
@@ -81,11 +91,15 @@ export interface MoveResult {
   error?: string;
   san?: string;
   fen?: string;
-  // Payment required from the moving player
-  paymentRequired?: {
-    amount: number;
-    toAddress: string;
-    fromSlot: PlayerSlot;
+  move?: { san: string; from: string; to: string; color: 'w' | 'b' };
+  // Capture payment info (victim must pay)
+  capturePayment?: {
+    victimSlot: PlayerSlot;
+    capturerSlot: PlayerSlot;
+    piece: string;            // captured piece type
+    amountSats: number;
+    capturerSats: number;
+    platformSats: number;
   };
   // Game state after move
   isCheck?: boolean;
@@ -93,6 +107,8 @@ export interface MoveResult {
   isStalemate?: boolean;
   isDraw?: boolean;
   drawReason?: string;
+  gameOver?: boolean;
+  gameOverResult?: GameOverResult;
 }
 
 export interface GameOverResult {
@@ -176,6 +192,7 @@ export class ChessGameManager {
       ),
       pot: 0,
       pendingPayment: null,
+      capturePayments: [],
       pausedFor: null, pausedAt: null, pauseReason: null,
       createdAt: Date.now(), startedAt: null, endedAt: null,
       endReason: null, winner: null,
@@ -234,7 +251,7 @@ export class ChessGameManager {
   }
 
   // ==========================================================================
-  // MAKE MOVE — Validates move, requires micro-payment before applying
+  // MAKE MOVE — Validates and applies immediately. Captures trigger payment from victim.
   // ==========================================================================
 
   attemptMove(
@@ -247,7 +264,6 @@ export class ChessGameManager {
     const game = this.getGameBySocket(socketId);
     if (!game) return { success: false, error: 'Not in a game' };
     if (game.phase !== 'playing') return { success: false, error: 'Game not active' };
-    if (game.pendingPayment) return { success: false, error: 'Payment pending — complete it first' };
 
     const slot = this.getSlot(game, socketId);
     if (!slot) return { success: false, error: 'Not a player' };
@@ -256,128 +272,85 @@ export class ChessGameManager {
     const currentTurn: PlayerSlot = game.chess.turn() === 'w' ? 'white' : 'black';
     if (slot !== currentTurn) return { success: false, error: 'Not your turn' };
 
-    // Validate the move with chess.js (don't apply yet — need payment first)
-    const chess = new Chess(game.chess.fen());
-    const move = chess.move({ from, to, promotion: promotion || undefined });
+    // Apply the move directly (no payment required for moves)
+    const move = game.chess.move({ from, to, promotion: promotion || undefined });
     if (!move) return { success: false, error: 'Illegal move' };
 
-    // Set pending payment for this move
-    game.pendingPayment = {
-      type: 'move',
-      fromSlot: slot,
-      amount: game.baseSats,
-      toAddress: escrowAddress || '',
-      move: move.san,
-      moveFrom: from,
-      moveTo: to,
-      promotion: promotion || undefined,
-    };
-
-    // Pause turn timer while waiting for payment
-    this.clearTurnTimer(game.id);
-
-    return {
-      success: true,
-      san: move.san,
-      fen: chess.fen(),
-      paymentRequired: {
-        amount: game.baseSats,
-        toAddress: escrowAddress || '',
-        fromSlot: slot,
-      },
-      isCheck: chess.isCheck(),
-      isCheckmate: chess.isCheckmate(),
-      isStalemate: chess.isStalemate(),
-      isDraw: chess.isDraw(),
-      drawReason: chess.isStalemate() ? 'stalemate'
-        : chess.isThreefoldRepetition() ? 'threefold_repetition'
-        : chess.isInsufficientMaterial() ? 'insufficient_material'
-        : chess.isDraw() ? 'fifty_move_rule'
-        : undefined,
-    };
-  }
-
-  // ==========================================================================
-  // CONFIRM MOVE PAYMENT — Apply the move after TX verification
-  // ==========================================================================
-
-  confirmMovePayment(
-    socketId: string,
-    txid: string,
-  ): {
-    success: boolean;
-    error?: string;
-    move?: { san: string; from: string; to: string; color: 'w' | 'b' };
-    fen?: string;
-    gameOver?: boolean;
-    gameOverResult?: GameOverResult;
-  } {
-    const game = this.getGameBySocket(socketId);
-    if (!game || !game.pendingPayment || game.pendingPayment.type !== 'move') {
-      return { success: false, error: 'No pending move payment' };
-    }
-
-    const pp = game.pendingPayment;
-    const slot = this.getSlot(game, socketId);
-    if (slot !== pp.fromSlot) return { success: false, error: 'Wrong player' };
-
-    // Apply the move to the authoritative chess instance
-    const move = game.chess.move({
-      from: pp.moveFrom!,
-      to: pp.moveTo!,
-      promotion: pp.promotion || undefined,
-    });
-
-    if (!move) return { success: false, error: 'Move no longer valid' };
-
-    // Update state
-    game.pot += pp.amount;
+    // Update move count
     game[slot].moveCount++;
-    game.pendingPayment = null;
-
-    const moveRecord = { san: move.san, from: move.from, to: move.to, color: move.color, txid };
+    const moveRecord = { san: move.san, from: move.from, to: move.to, color: move.color };
     game.moveHistory.push(moveRecord);
 
-    // Unpause if was paused
-    if (game.phase === 'paused') {
-      game.phase = 'playing';
-      game.pausedFor = null;
-      game.pausedAt = null;
-      game.pauseReason = null;
-      this.clearPauseTimer(game.id);
+    // Check for capture — triggers payment from victim
+    let capturePayment: MoveResult['capturePayment'] = undefined;
+    if (move.captured) {
+      const capturedPiece = move.captured as ChessPieceType; // p, n, b, r, q
+      const victimSlot = this.opponentSlot(slot);
+      const capturerSlot = slot;
+
+      // Calculate capture cost based on piece value
+      const amountSats = Math.ceil(game.baseSats * (PIECE_CAPTURE_PERCENT[capturedPiece] / 100));
+      const platformSats = Math.ceil(amountSats * PLATFORM_CUT_PERCENT / 100);
+      const capturerSats = amountSats - platformSats;
+
+      // Record capture payment
+      game.capturePayments.push({
+        fromSlot: victimSlot,
+        toSlot: capturerSlot,
+        piece: capturedPiece,
+        amountSats,
+        capturerSats,
+        platformSats,
+        paid: false,
+      });
+
+      // Add to pot (the payment flows through escrow)
+      game.pot += amountSats;
+
+      capturePayment = {
+        victimSlot,
+        capturerSlot,
+        piece: capturedPiece,
+        amountSats,
+        capturerSats,
+        platformSats,
+      };
     }
 
     // Check game over conditions
     if (game.chess.isCheckmate()) {
       const result = this.endGame(game, slot, 'checkmate');
-      return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: true, gameOverResult: result };
+      return { success: true, move: moveRecord, san: move.san, fen: game.chess.fen(), capturePayment, gameOver: true, gameOverResult: result, isCheckmate: true };
     }
 
     if (game.chess.isStalemate()) {
       const result = this.endGameDraw(game, 'stalemate');
-      return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: true, gameOverResult: result };
+      return { success: true, move: moveRecord, san: move.san, fen: game.chess.fen(), capturePayment, gameOver: true, gameOverResult: result, isStalemate: true, isDraw: true };
     }
 
     if (game.chess.isThreefoldRepetition()) {
       const result = this.endGameDraw(game, 'threefold_repetition');
-      return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: true, gameOverResult: result };
+      return { success: true, move: moveRecord, san: move.san, fen: game.chess.fen(), capturePayment, gameOver: true, gameOverResult: result, isDraw: true, drawReason: 'threefold_repetition' };
     }
 
     if (game.chess.isInsufficientMaterial()) {
       const result = this.endGameDraw(game, 'insufficient_material');
-      return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: true, gameOverResult: result };
+      return { success: true, move: moveRecord, san: move.san, fen: game.chess.fen(), capturePayment, gameOver: true, gameOverResult: result, isDraw: true, drawReason: 'insufficient_material' };
     }
 
     if (game.chess.isDraw()) {
       const result = this.endGameDraw(game, 'fifty_move_rule');
-      return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: true, gameOverResult: result };
+      return { success: true, move: moveRecord, san: move.san, fen: game.chess.fen(), capturePayment, gameOver: true, gameOverResult: result, isDraw: true, drawReason: 'fifty_move_rule' };
     }
 
     // Continue — start next turn timer
     game.turnStartedAt = Date.now();
     this.startTurnTimer(game);
 
-    return { success: true, move: moveRecord, fen: game.chess.fen(), gameOver: false };
+    return {
+      success: true, move: moveRecord, san: move.san, fen: game.chess.fen(),
+      capturePayment, gameOver: false, isCheck: game.chess.isCheck(),
+    };
   }
 
   // ==========================================================================
@@ -430,13 +403,25 @@ export class ChessGameManager {
     this.clearDisconnectTimer(game.id, 'black');
 
     const loser = this.opponentSlot(winner);
-    const cutPct = PLATFORM_CUT_PERCENT;
-    const winnerPayout = Math.floor(game.pot * (1 - cutPct / 100));
-    const platformCut = game.pot - winnerPayout;
+
+    // Winner gets opponent's deposit minus 3% platform cut
+    const loserDeposit = game.depositSats;
+    const depositPlatformCut = Math.ceil(loserDeposit * PLATFORM_CUT_PERCENT / 100);
+    const depositToWinner = loserDeposit - depositPlatformCut;
+
+    // If checkmate, also add king capture value (already tracked in capturePayments during endgame)
+    // Total capture payments platform cut
+    const capturePlatformCut = game.capturePayments.reduce((sum, cp) => sum + cp.platformSats, 0);
+
+    const totalPlatformCut = depositPlatformCut + capturePlatformCut;
+    const winnerPayout = depositToWinner + game.capturePayments
+      .filter(cp => cp.toSlot === winner)
+      .reduce((sum, cp) => sum + cp.capturerSats, 0);
 
     return {
       winner, loser, reason,
-      pot: game.pot, winnerPayout, loserPayout: 0, platformCut,
+      pot: game.pot + game.depositSats * 2,
+      winnerPayout, loserPayout: 0, platformCut: totalPlatformCut,
       whiteAddress: game.white.address,
       blackAddress: game.black.address,
     };
@@ -457,14 +442,14 @@ export class ChessGameManager {
     this.clearDisconnectTimer(game.id, 'white');
     this.clearDisconnectTimer(game.id, 'black');
 
-    const cutPct = PLATFORM_CUT_PERCENT;
-    const afterCut = Math.floor(game.pot * (1 - cutPct / 100));
-    const eachPlayer = Math.floor(afterCut / 2);
-    const platformCut = game.pot - eachPlayer * 2;
+    // Each player gets their own deposit back minus 3%
+    const depositReturn = Math.floor(game.depositSats * (1 - PLATFORM_CUT_PERCENT / 100));
+    const platformCut = (game.depositSats - depositReturn) * 2;
 
     return {
       winner: null, loser: null, reason,
-      pot: game.pot, winnerPayout: eachPlayer, loserPayout: eachPlayer, platformCut,
+      pot: game.pot + game.depositSats * 2,
+      winnerPayout: depositReturn, loserPayout: depositReturn, platformCut,
       whiteAddress: game.white.address,
       blackAddress: game.black.address,
     };
@@ -546,7 +531,7 @@ export class ChessGameManager {
     game[slot].socketId = socketId;
     this.playerToGame.set(socketId, gameId);
 
-    if (game.phase === 'playing' && !game.pendingPayment) {
+    if (game.phase === 'playing') {
       game.turnStartedAt = Date.now();
       this.startTurnTimer(game);
     }
