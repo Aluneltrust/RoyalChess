@@ -370,7 +370,12 @@ export function setupSocketHandlers(io: Server): void {
         san: move.san, from: move.from, to: move.to, color: move.color,
         fen: result.fen, pot: game.pot,
         isCheck: result.isCheck || false,
+        isCheckmate: result.isCheckmate || false,
         capturePayment: result.capturePayment || null,
+        capturedPiece: result.capturePayment?.piece || null,
+        isCastle: move.san.startsWith('O') || false,
+        movingPiece: move.san.charAt(0) === move.san.charAt(0).toUpperCase() && !'O'.includes(move.san.charAt(0))
+          ? move.san.charAt(0).toLowerCase() : 'p',
       };
 
       io.to(game.white.socketId).emit('move_confirmed', moveData);

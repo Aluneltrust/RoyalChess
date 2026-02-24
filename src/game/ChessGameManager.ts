@@ -404,19 +404,22 @@ export class ChessGameManager {
 
     const loser = this.opponentSlot(winner);
 
-    // Winner gets opponent's deposit minus 3% platform cut
+    // Winner gets: own deposit back + opponent's deposit minus 3% platform cut
+    const ownDeposit = game.depositSats;
     const loserDeposit = game.depositSats;
     const depositPlatformCut = Math.ceil(loserDeposit * PLATFORM_CUT_PERCENT / 100);
     const depositToWinner = loserDeposit - depositPlatformCut;
 
-    // If checkmate, also add king capture value (already tracked in capturePayments during endgame)
     // Total capture payments platform cut
     const capturePlatformCut = game.capturePayments.reduce((sum, cp) => sum + cp.platformSats, 0);
 
     const totalPlatformCut = depositPlatformCut + capturePlatformCut;
-    const winnerPayout = depositToWinner + game.capturePayments
+    const captureEarnings = game.capturePayments
       .filter(cp => cp.toSlot === winner)
       .reduce((sum, cp) => sum + cp.capturerSats, 0);
+
+    // Full payout: own deposit + opponent's deposit (minus 3%) + capture earnings
+    const winnerPayout = ownDeposit + depositToWinner + captureEarnings;
 
     return {
       winner, loser, reason,
