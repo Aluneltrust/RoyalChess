@@ -484,6 +484,7 @@ export class ChessGameManager {
   handleDisconnect(socketId: string): {
     gameId: string; slot: PlayerSlot;
     graceStarted: boolean; immediateResult: GameOverResult | null;
+    wagerRefund?: { address: string; amount: number };
   } | null {
     const game = this.getGameBySocket(socketId);
     if (!game || game.phase === 'gameover') return null;
@@ -492,10 +493,35 @@ export class ChessGameManager {
 
     game[slot].connected = false;
     game[slot].disconnectedAt = Date.now();
-    const winner = this.opponentSlot(slot);
+    const opponent = this.opponentSlot(slot);
 
     this.clearTurnTimer(game.id);
 
+    // ---- DISCONNECT DURING WAGER PHASE — immediate cancel, full refund ----
+    if (game.phase === 'awaiting_wagers') {
+      game.phase = 'gameover';
+      game.endedAt = Date.now();
+      game.endReason = 'disconnect';
+      this.clearDisconnectTimer(game.id, 'white');
+      this.clearDisconnectTimer(game.id, 'black');
+
+      // If opponent already paid, they get a full refund (no platform cut)
+      let wagerRefund: { address: string; amount: number } | undefined;
+      if (game[opponent].wagerPaid) {
+        wagerRefund = { address: game[opponent].address, amount: game.depositSats };
+      }
+
+      const result: GameOverResult = {
+        winner: null, loser: null, reason: 'disconnect',
+        pot: 0, winnerPayout: 0, loserPayout: 0, platformCut: 0,
+        whiteAddress: game.white.address,
+        blackAddress: game.black.address,
+      };
+
+      return { gameId: game.id, slot, graceStarted: false, immediateResult: result, wagerRefund };
+    }
+
+    // ---- DISCONNECT DURING PLAYING — grace period, then forfeit ----
     const timerKey = `${game.id}:${slot}`;
     this.clearDisconnectTimer(game.id, slot);
 
@@ -503,8 +529,8 @@ export class ChessGameManager {
       const g = this.games.get(game.id);
       if (!g || g.phase === 'gameover') return;
       if (!g[slot].connected) {
-        this.endGame(g, winner, 'disconnect');
-        this.onDisconnectTimeout?.(game.id, winner, slot);
+        this.endGame(g, opponent, 'disconnect');
+        this.onDisconnectTimeout?.(game.id, opponent, slot);
       }
     }, this.RECONNECT_GRACE_MS);
 

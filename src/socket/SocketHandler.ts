@@ -497,6 +497,47 @@ export function setupSocketHandlers(io: Server): void {
 
       if (gameResult) {
         const game = gameManager.getGame(gameResult.gameId);
+
+        // Immediate cancel during wager phase — refund if needed
+        if (gameResult.immediateResult && !gameResult.graceStarted) {
+          sessionManager.revokeBySocket(socket.id);
+          const opp = gameManager.opponentSlot(gameResult.slot);
+
+          if (game) {
+            // Notify the remaining player that opponent left
+            io.to(game[opp].socketId).emit('game_cancelled', {
+              reason: 'Opponent left before paying deposit.',
+              refund: gameResult.wagerRefund ? gameResult.wagerRefund.amount : 0,
+            });
+
+            // Process refund if opponent had already paid
+            if (gameResult.wagerRefund) {
+              console.log(`💰 Refunding ${gameResult.wagerRefund.amount} sats to ${gameResult.wagerRefund.address} (opponent left during wager phase)`);
+              try {
+                const refundResult = await escrowManager.settle(
+                  gameResult.gameId, gameResult.wagerRefund.address, gameResult.wagerRefund.amount, 0
+                );
+                if (refundResult.success) {
+                  console.log(`✅ Refund sent: ${refundResult.txid}`);
+                  io.to(game[opp].socketId).emit('wager_refunded', {
+                    amount: gameResult.wagerRefund.amount,
+                    txid: refundResult.txid,
+                  });
+                } else {
+                  console.error(`❌ Refund failed:`, refundResult.error);
+                  io.to(game[opp].socketId).emit('error', {
+                    message: `Refund failed. Contact support. Game: ${gameResult.gameId}`,
+                  });
+                }
+              } catch (err) {
+                console.error('❌ Refund exception:', err);
+              }
+            }
+          }
+          return;
+        }
+
+        // Grace period during playing phase
         if (gameResult.graceStarted && game) {
           const revocationKey = `${gameResult.gameId}:${gameResult.slot}`;
           const timer = setTimeout(() => {
