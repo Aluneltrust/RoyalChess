@@ -8,6 +8,7 @@ import { matchmakingQueue } from '../game/Matchmaking';
 import { STAKE_TIERS } from '../game/Constants';
 import { escrowManager, priceService, fetchBalance } from '../wallet/BsvService';
 import * as db from '../DB/Database';
+import { getPool } from '../DB/Database';
 import { sessionManager } from '../socket/SessionManager';
 import { lobbyManager } from '../game/LobbyManager';
 
@@ -148,6 +149,68 @@ router.post('/api/taal/tx', requireSession, async (req, res) => {
     const result = await r.json() as any;
     res.status(r.status).json(result);
   } catch { res.status(500).json({ error: 'Broadcast failed' }); }
+});
+
+// ============================================================================
+// ADMIN — Escrow audit (check for unsettled funds)
+// ============================================================================
+
+router.get('/api/admin/escrow-audit', async (req, res) => {
+  const adminKey = req.headers['x-admin-key'] as string || '';
+  if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
+    res.status(401).json({ error: 'Unauthorized' }); return;
+  }
+
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT id, stake_tier, white_address, black_address, winner_address,
+              end_reason, pot, winner_payout, platform_cut, settle_txid,
+              started_at, ended_at
+       FROM games ORDER BY created_at DESC LIMIT 200`
+    );
+
+    const audits: any[] = [];
+    let totalStranded = 0;
+
+    for (const game of result.rows) {
+      const escrowAddr = escrowManager.getGameAddress(game.id);
+      let balance = 0;
+      try {
+        balance = await fetchBalance(escrowAddr);
+      } catch { /* ignore fetch errors */ }
+
+      if (balance > 0) {
+        totalStranded += balance;
+      }
+
+      audits.push({
+        gameId: game.id,
+        escrowAddress: escrowAddr,
+        balance,
+        stakeTier: game.stake_tier,
+        pot: Number(game.pot),
+        winnerPayout: Number(game.winner_payout),
+        platformCut: Number(game.platform_cut),
+        settleTxid: game.settle_txid || null,
+        endReason: game.end_reason,
+        endedAt: game.ended_at,
+        hasStranded: balance > 0,
+      });
+    }
+
+    const stranded = audits.filter(a => a.hasStranded);
+
+    res.json({
+      totalGames: audits.length,
+      strandedCount: stranded.length,
+      totalStrandedSats: totalStranded,
+      stranded,
+      all: audits,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Audit failed', details: err.message });
+  }
 });
 
 export default router;
