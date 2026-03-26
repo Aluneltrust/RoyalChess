@@ -1,0 +1,463 @@
+/* ============================================================================
+   3D CHESS BOARD — CSS 3D Transforms
+   ============================================================================ */
+
+/* ---- WRAPPER & AMBIENT ---- */
+
+.cb3-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.cb3-ambient {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- 3D PERSPECTIVE CONTAINER ---- */
+
+.cb3-perspective {
+  position: relative;
+  perspective: 1000px;
+  perspective-origin: 50% 35%;
+  z-index: 1;
+}
+
+/* ---- WOOD FRAME ---- */
+
+.cb3-frame {
+  position: relative;
+  padding: 14px;
+  background: linear-gradient(145deg, #5c3d1e, #3a2510, #4a3015);
+  border-radius: 6px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  transform: rotateX(18deg) rotateZ(0deg);
+  transform-style: preserve-3d;
+}
+
+/* Frame beveled edges */
+.cb3-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.cb3-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+/* ---- THE BOARD GRID ---- */
+
+.cb3-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: min(460px, calc(100vw - 80px));
+  height: min(460px, calc(100vw - 80px));
+  border-radius: 2px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- SQUARES ---- */
+
+.cb3-sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  user-select: none;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease;
+}
+
+.cb3-sq.cb3-active {
+  cursor: pointer;
+}
+
+/* Light / dark squares with wood-grain gradient */
+.cb3-light {
+  background: linear-gradient(135deg, #f0debb 0%, #e8d5aa 50%, #dfc99a 100%);
+}
+
+.cb3-dark {
+  background: linear-gradient(135deg, #b48a5a 0%, #a67c4e 50%, #986e42 100%);
+}
+
+/* Square top surface — gives depth illusion */
+.cb3-sq-top {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+.cb3-light .cb3-sq-top {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.cb3-dark .cb3-sq-top {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Selected square */
+.cb3-selected {
+  background: rgba(96, 165, 250, 0.5) !important;
+  box-shadow: inset 0 0 12px rgba(96, 165, 250, 0.4);
+}
+
+/* Last move highlight */
+.cb3-lastmove::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 191, 36, 0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Check square */
+.cb3-check {
+  animation: check-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes check-glow {
+  0%, 100% {
+    box-shadow: inset 0 0 12px rgba(251, 80, 80, 0.5);
+    background: rgba(251, 80, 80, 0.3);
+  }
+  50% {
+    box-shadow: inset 0 0 24px rgba(251, 80, 80, 0.7);
+    background: rgba(251, 80, 80, 0.45);
+  }
+}
+
+/* ---- LEGAL MOVE INDICATORS ---- */
+
+.cb3-dot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.cb3-dot-inner {
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.6) 0%, rgba(96, 165, 250, 0.3) 100%);
+  box-shadow: 0 2px 6px rgba(96, 165, 250, 0.3);
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.cb3-capture-ring {
+  position: absolute;
+  inset: 6%;
+  border: 3px solid rgba(96, 165, 250, 0.5);
+  border-radius: 50%;
+  z-index: 4;
+  pointer-events: none;
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ---- COORDINATES ---- */
+
+.cb3-coord-rank {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.cb3-light .cb3-coord-rank { color: #986e42; }
+.cb3-dark .cb3-coord-rank { color: #dfc99a; }
+
+.cb3-coord-file {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.cb3-light .cb3-coord-file { color: #986e42; }
+.cb3-dark .cb3-coord-file { color: #dfc99a; }
+
+/* External labels */
+.cb3-labels-rank {
+  position: absolute;
+  left: -20px;
+  top: 14px;
+  height: min(460px, calc(100vw - 80px));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  transform: rotateX(18deg);
+  transform-origin: right center;
+}
+
+.cb3-labels-rank span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(200, 205, 216, 0.4);
+  text-align: center;
+}
+
+.cb3-labels-file {
+  position: absolute;
+  bottom: -22px;
+  left: 14px;
+  width: min(460px, calc(100vw - 80px));
+  display: flex;
+  justify-content: space-around;
+  transform: rotateX(18deg);
+  transform-origin: top center;
+}
+
+.cb3-labels-file span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(200, 205, 216, 0.4);
+  text-align: center;
+}
+
+/* ---- 3D PIECES ---- */
+
+.cb3-piece {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Piece shadow on board */
+.cb3-piece-shadow {
+  position: absolute;
+  bottom: 8%;
+  left: 15%;
+  right: 15%;
+  height: 20%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translateZ(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Piece base — darker circle under piece */
+.cb3-piece-base {
+  position: absolute;
+  bottom: 12%;
+  left: 18%;
+  right: 18%;
+  height: 14%;
+  border-radius: 50%;
+  transform: translateZ(2px);
+}
+
+.cb3-piece-w .cb3-piece-base {
+  background: linear-gradient(to bottom, #c9b896, #a89070);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.cb3-piece-b .cb3-piece-base {
+  background: linear-gradient(to bottom, #3a3a3a, #1a1a1a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Piece body */
+.cb3-piece-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  transform: translateZ(calc(var(--piece-height, 0.5) * 6px));
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
+}
+
+.cb3-glyph {
+  font-size: min(3.2rem, 7.5vw);
+  line-height: 1;
+  transform: rotateX(-18deg); /* Counter-rotate to face viewer */
+}
+
+/* White pieces */
+.cb3-piece-w .cb3-glyph {
+  color: #fff8ee;
+  text-shadow:
+    0 1px 0 #d4c4a8,
+    0 2px 0 #c4b498,
+    0 3px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Black pieces */
+.cb3-piece-b .cb3-glyph {
+  color: #2a2a2a;
+  text-shadow:
+    0 1px 0 #1a1a1a,
+    0 2px 0 #111,
+    0 3px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Specular highlight on piece */
+.cb3-piece-shine {
+  position: absolute;
+  top: 15%;
+  left: 30%;
+  width: 30%;
+  height: 20%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.15) 0%, transparent 80%);
+  border-radius: 50%;
+  transform: translateZ(calc(var(--piece-height, 0.5) * 8px));
+  pointer-events: none;
+}
+
+.cb3-piece-b .cb3-piece-shine {
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.06) 0%, transparent 80%);
+}
+
+/* Lifted piece (selected) */
+.cb3-piece-lifted .cb3-piece-body {
+  transform: translateZ(calc(var(--piece-height, 0.5) * 6px + 12px)) scale(1.08);
+}
+
+.cb3-piece-lifted .cb3-piece-shadow {
+  bottom: 4%;
+  left: 10%;
+  right: 10%;
+  height: 24%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
+}
+
+/* Hovered piece */
+.cb3-piece-hover .cb3-piece-body {
+  transform: translateZ(calc(var(--piece-height, 0.5) * 6px + 4px));
+}
+
+/* ---- PROMOTION MODAL ---- */
+
+.cb3-promo-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 6px;
+}
+
+.cb3-promo-card {
+  background: linear-gradient(145deg, #1f2330, #181b24);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(96, 165, 250, 0.1);
+}
+
+.cb3-promo-title {
+  font-size: 13px;
+  color: rgba(200, 205, 216, 0.6);
+  text-align: center;
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cb3-promo-options {
+  display: flex;
+  gap: 10px;
+}
+
+.cb3-promo-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 36px;
+  background: linear-gradient(145deg, #272b38, #1f2330);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cb3-promo-btn:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(96, 165, 250, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+}
+
+/* ---- RESPONSIVE ---- */
+
+@media (max-width: 520px) {
+  .cb3-frame {
+    padding: 10px;
+    transform: rotateX(12deg);
+  }
+
+  .cb3-glyph {
+    font-size: 6.5vw;
+  }
+
+  .cb3-piece-body {
+    transform: translateZ(calc(var(--piece-height, 0.5) * 4px));
+  }
+
+  .cb3-labels-rank { left: -16px; }
+  .cb3-labels-file { bottom: -18px; }
+}

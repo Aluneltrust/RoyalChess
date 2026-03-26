@@ -1,0 +1,1708 @@
+/* ============================================================================
+   BSV CHESS — Main Styles
+   ============================================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  --bg: #0f1117;
+  --surface: #181b24;
+  --surface2: #1f2330;
+  --surface3: #272b38;
+  --border: #2a2f3d;
+  --border-active: #3d4450;
+  --text: #c8cdd8;
+  --text-dim: #6b7280;
+  --text-bright: #eef0f6;
+  --accent: #60a5fa;
+  --accent-green: #4ade80;
+  --accent-amber: #fbbf24;
+  --accent-red: #fb7185;
+  --accent-purple: #a78bfa;
+
+  /* Chess board */
+  --board-light: #e8dcc8;
+  --board-dark: #b58863;
+  --board-selected: rgba(96, 165, 250, 0.45);
+  --board-legal: rgba(96, 165, 250, 0.3);
+  --board-last-move: rgba(251, 191, 36, 0.25);
+  --board-check: rgba(251, 113, 133, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "DM Sans", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover {
+  background: var(--surface3);
+  border-color: var(--border-active);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+.btn-secondary {
+  background: transparent;
+}
+.btn-danger {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+.btn-large {
+  padding: 14px 28px;
+  font-size: 16px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-tiny {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+/* ============================================================================
+   CONNECT / PIN SCREENS — Vault entrance: teal fog, gold accents, red velvet
+   ============================================================================ */
+
+.connect-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0a1a1a url("/backgrounds/vault-entrance.png") center center /
+    cover no-repeat;
+}
+
+.connect-card {
+  width: min(600px, 85vw);
+  height: min(600px, 85vw);
+  padding: 50px 40px;
+  background: rgba(8, 28, 28, 0.85);
+  border-radius: 50%;
+  text-align: center;
+  backdrop-filter: blur(16px);
+  border: 3px solid rgba(255, 200, 60, 0.6);
+  box-shadow:
+    0 0 15px rgba(255, 191, 0, 0.5),
+    0 0 40px rgba(255, 191, 0, 0.3),
+    0 0 80px rgba(255, 191, 0, 0.2),
+    0 0 160px rgba(255, 191, 0, 0.1),
+  inset 0 0 30px rgba(255, 191, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: -14vh;
+}
+
+.game-logo {
+  font-size: 44px;
+  margin-bottom: 6px;
+}
+.game-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: #e8d5a3;
+  margin-bottom: 4px;
+  text-shadow: 0 0 20px rgba(180, 160, 100, 0.3);
+}
+.game-subtitle {
+  color: #7fb8b0;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.game-description {
+  color: #8fa8a0;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  max-width: 320px;
+}
+
+.connect-screen .btn-primary {
+  background: linear-gradient(135deg, #b8964e, #d4a853);
+  color: #1a1205;
+  border-color: #c9a24a;
+  font-weight: 600;
+}
+.connect-screen .btn-primary:hover {
+  filter: brightness(1.15);
+}
+.connect-screen .btn-secondary {
+  background: transparent;
+  border-color: rgba(180, 160, 100, 0.3);
+  color: #c9b87a;
+}
+.connect-screen .btn-secondary:hover {
+  background: rgba(180, 160, 100, 0.08);
+  border-color: rgba(180, 160, 100, 0.5);
+}
+
+.address-hint {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: #7fb8b0;
+  padding: 6px 12px;
+  background: rgba(20, 50, 50, 0.6);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.pin-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+.pin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pin-label {
+  font-size: 12px;
+  color: #7fb8b0;
+  text-align: left;
+}
+.pin-input {
+  width: 100%;
+  padding: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 8px;
+  background: rgba(15, 40, 40, 0.7);
+  border: 1px solid rgba(180, 160, 100, 0.3);
+  border-radius: 8px;
+  color: #e8d5a3;
+  outline: none;
+}
+.pin-input:focus {
+  border-color: #c9a24a;
+  box-shadow: 0 0 12px rgba(200, 170, 80, 0.2);
+}
+.pin-error {
+  color: #e87070;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.pin-footer {
+  margin-top: 10px;
+}
+
+.security-notice {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(40, 80, 70, 0.25);
+  border: 1px solid rgba(100, 200, 170, 0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #8fa8a0;
+  line-height: 1.4;
+  text-align: left;
+  max-width: 320px;
+}
+.security-notice strong {
+  color: #6dd8b0;
+}
+
+.connect-divider {
+  margin: 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #5a7a72;
+  font-size: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+.connect-divider::before,
+.connect-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(180, 160, 100, 0.15);
+}
+
+.import-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+}
+.wif-input {
+  width: 100%;
+  padding: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  background: rgba(15, 40, 40, 0.7);
+  border: 1px solid rgba(180, 160, 100, 0.2);
+  border-radius: 8px;
+  color: #c9d5c0;
+  outline: none;
+}
+.wif-input:focus {
+  border-color: #c9a24a;
+}
+
+/* Constrain buttons inside circular card */
+.connect-card .btn-primary,
+.connect-card .btn-secondary {
+  max-width: 300px;
+  width: 100%;
+  justify-content: center;
+  font-size: 14px;
+}
+.connect-card .btn-large {
+  padding: 12px 24px;
+  font-size: 15px;
+}
+
+/* Address hint inside circular card */
+.connect-card .address-hint {
+  font-size: 11px;
+  max-width: 300px;
+  padding: 5px 12px;
+  margin-bottom: 12px;
+}
+
+/* ============================================================================
+   LOBBY — Chess pyramid: deep purple/blue, neon cyan glow, gold king
+   ============================================================================ */
+
+.lobby-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0a0812 url("/backgrounds/chess-pyramid.png") center center /
+    cover no-repeat;
+}
+.lobby-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  background: rgba(12, 8, 24, 0.82);
+  border: 1px solid rgba(100, 180, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(100, 180, 255, 0.08);
+}
+.lobby-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  color: #e8d5a3;
+  text-align: center;
+  margin-bottom: 24px;
+  text-shadow: 0 0 20px rgba(200, 170, 80, 0.3);
+}
+
+.username-section {
+  margin-bottom: 16px;
+}
+.username-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(18, 14, 35, 0.7);
+  border: 1px solid rgba(100, 180, 255, 0.2);
+  border-radius: 8px;
+  color: #d0d8f0;
+  font-size: 14px;
+  outline: none;
+}
+.username-input:focus {
+  border-color: #5eead4;
+  box-shadow: 0 0 12px rgba(94, 234, 212, 0.15);
+}
+
+.balance-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(18, 14, 35, 0.6);
+  border: 1px solid rgba(94, 234, 212, 0.15);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: #5eead4;
+  cursor: pointer;
+}
+
+.tier-section {
+  margin-bottom: 24px;
+}
+.tier-section h3 {
+  font-size: 14px;
+  color: #8b7ec8;
+  margin-bottom: 10px;
+}
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tier-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  background: rgba(18, 14, 35, 0.6);
+  border: 1px solid rgba(100, 130, 220, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #a0a8c8;
+}
+.tier-btn:hover {
+  border-color: rgba(100, 180, 255, 0.4);
+  background: rgba(30, 20, 55, 0.7);
+}
+.tier-btn.selected {
+  border-color: #5eead4;
+  background: rgba(94, 234, 212, 0.08);
+  color: #5eead4;
+  box-shadow: 0 0 16px rgba(94, 234, 212, 0.1);
+}
+.tier-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+.tier-amount {
+  font-size: 11px;
+  color: #7b70b0;
+}
+.tier-move {
+  font-size: 10px;
+  color: #7b70b0;
+}
+
+.lobby-screen .btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border-color: #7c5cf6;
+  font-weight: 600;
+}
+.lobby-screen .btn-primary:hover {
+  filter: brightness(1.15);
+}
+.lobby-screen .btn-primary:disabled {
+  opacity: 0.4;
+}
+.lobby-screen .btn-secondary {
+  border-color: rgba(100, 180, 255, 0.2);
+  color: #8b9ad0;
+}
+.lobby-screen .btn-tiny {
+  background: rgba(18, 14, 35, 0.6);
+  border-color: rgba(100, 130, 220, 0.2);
+  color: #8b9ad0;
+}
+
+.balance-warning {
+  color: #fbbf24;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ============================================================================
+   INCOMING CHALLENGE — purple neon style
+   ============================================================================ */
+
+.challenge-incoming {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.challenge-incoming span {
+  font-size: 13px;
+  flex: 1;
+  color: #c4b5fd;
+}
+.challenge-incoming .btn-small {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* ============================================================================
+   ONLINE PLAYERS — purple neon style
+   ============================================================================ */
+
+.no-players {
+  font-size: 12px;
+  color: #6b60a0;
+  text-align: center;
+  padding: 12px 0;
+}
+.players-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+.players-list h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(18, 14, 35, 0.5);
+  border: 1px solid rgba(100, 130, 220, 0.12);
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.player-row:hover {
+  border-color: rgba(100, 130, 220, 0.3);
+}
+.player-row .name {
+  color: #d0d8f0;
+  font-weight: 600;
+}
+.player-row .stats {
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+}
+.player-row .challenge-btn {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.player-row .challenge-btn:hover {
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+  transform: scale(1.05);
+}
+
+.btn-challenge {
+  padding: 4px 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-challenge:hover {
+  background: rgba(139, 92, 246, 0.3);
+  color: #e0d4ff;
+}
+
+/* ============================================================================
+   MATCHMAKING
+   ============================================================================ */
+
+.matchmaking-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0812 url("/backgrounds/chess-pyramid.png") center center /
+    cover no-repeat;
+}
+.matchmaking-card {
+  text-align: center;
+  padding: 40px;
+  background: rgba(12, 8, 24, 0.82);
+  border-radius: 16px;
+  border: 1px solid rgba(100, 180, 255, 0.15);
+  backdrop-filter: blur(16px);
+  color: #d0d8f0;
+}
+.spinner-icon {
+  font-size: 48px;
+  animation: spin 2s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   WAGER SCREEN — deposit payment, uses pyramid bg
+   ============================================================================ */
+
+.wager-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0a0812 url("/backgrounds/chess-pyramid.png") center center /
+    cover no-repeat;
+}
+.wager-card {
+  max-width: 400px;
+  width: 100%;
+  padding: 32px;
+  text-align: center;
+  background: rgba(12, 8, 24, 0.82);
+  border: 1px solid rgba(100, 180, 255, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(100, 180, 255, 0.08);
+}
+.wager-card h2 {
+  color: #e8d5a3;
+}
+.wager-info {
+  font-size: 18px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #d0d8f0;
+}
+.wager-status {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wager-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(18, 14, 35, 0.6);
+  border: 1px solid rgba(100, 130, 220, 0.15);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #a0a8c8;
+}
+.wager-player.paid {
+  color: #5eead4;
+}
+.waiting-text {
+  color: #6b60a0;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.wager-screen .btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border-color: #7c5cf6;
+  font-weight: 600;
+}
+.wager-screen .btn-primary:hover {
+  filter: brightness(1.15);
+}
+.wager-screen .btn-secondary {
+  border-color: rgba(100, 180, 255, 0.2);
+  color: #8b9ad0;
+}
+.matchmaking-screen .btn-secondary {
+  border-color: rgba(100, 180, 255, 0.2);
+  color: #8b9ad0;
+  background: transparent;
+}
+
+/* ============================================================================
+   GAME AREA — Immersive fullscreen board with floating glass panels
+   ============================================================================ */
+
+.game-container {
+  height: 100vh;
+  height: 100dvh;
+  background: #0a0c10;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Board fills the entire screen */
+.board-area {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- Floating glass bars ---- */
+
+.floating-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(14, 17, 23, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.floating-bar.top-bar {
+  top: 10px;
+  justify-content: space-between;
+}
+
+.floating-bar.bottom-bar {
+  bottom: 10px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 90vw;
+}
+
+/* ---- Player badge ---- */
+
+.player-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.badge-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e5ed;
+  letter-spacing: 0.01em;
+}
+
+.badge-balance {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: #4ade80;
+  padding: 2px 8px;
+  background: rgba(74, 222, 128, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(74, 222, 128, 0.12);
+}
+
+/* ---- Turn indicator ---- */
+
+.turn-indicator {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.turn-pill {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+.turn-pill.your-turn {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93bbfc;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  animation: turn-pulse 2s ease-in-out infinite;
+}
+
+.turn-pill.their-turn {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.15);
+}
+
+@keyframes turn-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px rgba(96, 165, 250, 0.15);
+  }
+}
+
+/* ---- Top bar action buttons ---- */
+
+.top-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.icon-btn.danger:hover {
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.25);
+}
+
+/* ---- Message toast ---- */
+
+.game-toast {
+  position: absolute;
+  top: calc(62px + 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  padding: 8px 20px;
+  background: rgba(96, 165, 250, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 20px;
+  color: #93bbfc;
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  white-space: nowrap;
+  animation: toast-in 0.3s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ---- View control buttons ---- */
+
+.view-controls {
+  position: absolute;
+  bottom: calc(100px + 10px + 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+}
+
+.view-btn {
+  padding: 5px 14px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", monospace;
+  background: rgba(14, 17, 23, 0.75);
+  color: rgba(200, 205, 220, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+}
+
+.view-btn:hover {
+  background: rgba(14, 17, 23, 0.9);
+  color: rgba(200, 205, 220, 0.9);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+/* ---- Economics strip ---- */
+
+.econ-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 4px 2px;
+  flex-shrink: 0;
+}
+
+.econ-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 14px;
+  gap: 1px;
+}
+
+.econ-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #4b5060;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.econ-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c8cdd8;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.econ-item.pot .econ-val {
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
+}
+
+.econ-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Stats rows ---- */
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.moves-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.moves-row .move-history {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-height: 44px;
+  overflow: hidden;
+}
+
+.moves-row .move-history h4 {
+  display: none;
+}
+
+.moves-row .move-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex-direction: row;
+  overflow-x: auto;
+  max-width: 500px;
+  scrollbar-width: none;
+}
+
+.moves-row .move-list::-webkit-scrollbar {
+  display: none;
+}
+
+.moves-row .move-pair {
+  flex-direction: row;
+  gap: 3px;
+  padding: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.moves-row .move-num {
+  font-size: 10px;
+}
+.moves-row .move-san {
+  font-size: 11px;
+}
+
+.escrow-link {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: #4b5060;
+  text-decoration: none;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.escrow-link:hover {
+  color: #60a5fa;
+}
+
+/* ============================================================================
+   MOVE HISTORY
+   ============================================================================ */
+
+.move-history {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.move-history h4 {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.move-pair {
+  display: flex;
+  gap: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.move-pair:hover {
+  background: var(--surface2);
+}
+.move-num {
+  color: var(--text-dim);
+  min-width: 24px;
+}
+.move-san {
+  color: var(--text-bright);
+}
+.white-move {
+  min-width: 60px;
+}
+.tx-link {
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 2px;
+  font-size: 10px;
+}
+.move-cost-info {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ============================================================================
+   MODALS
+   ============================================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+.modal-card {
+  max-width: 420px;
+  width: 90%;
+  padding: 32px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.modal-card h2 {
+  font-size: 22px;
+  color: var(--text-bright);
+}
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.icon-gold {
+  color: var(--accent-amber);
+}
+.icon-red {
+  color: var(--accent-red);
+}
+.pot-breakdown {
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: 8px;
+  width: 100%;
+  font-size: 13px;
+}
+.pot-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.payout-info {
+  color: var(--accent-green);
+  margin-top: 6px;
+}
+.wallet-address-full {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  padding: 8px;
+  background: var(--surface2);
+  border-radius: 6px;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+/* ============================================================================
+   WALLET PAGE — Vault interior: warm gold, dark marble, red velvet, amber
+   ============================================================================ */
+
+.wallet-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #110d08 url("/backgrounds/vault-interior.png") center center /
+    cover no-repeat;
+}
+
+.wallet-container {
+  max-width: 460px;
+  width: 100%;
+}
+.wallet-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.wallet-header h1 {
+  font-size: 20px;
+  color: #e8d5a3;
+}
+.wallet-header .btn-secondary {
+  border-color: rgba(200, 170, 100, 0.3);
+  color: #c9b87a;
+  background: rgba(18, 14, 8, 0.6);
+}
+.wallet-header .btn-secondary:hover {
+  background: rgba(200, 170, 100, 0.1);
+}
+
+.balance-card {
+  padding: 20px;
+  background: rgba(18, 14, 8, 0.82);
+  border: 1px solid rgba(200, 170, 100, 0.2);
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(200, 170, 100, 0.08);
+}
+.balance-label {
+  font-size: 12px;
+  color: #8a7a5a;
+}
+.balance-amount {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 24px;
+  color: #e8d5a3;
+  margin: 4px 0;
+  text-shadow: 0 0 12px rgba(200, 170, 100, 0.2);
+}
+.balance-usd {
+  font-size: 13px;
+  color: #a0906a;
+}
+
+.wallet-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid rgba(200, 170, 100, 0.15);
+  background: rgba(18, 14, 8, 0.6);
+  border-radius: 8px;
+  color: #8a7a5a;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.tab:hover {
+  background: rgba(30, 24, 14, 0.7);
+  color: #b8a878;
+}
+.tab.active {
+  background: rgba(200, 170, 100, 0.1);
+  color: #e8d5a3;
+  border-color: rgba(200, 170, 100, 0.4);
+}
+.tab-content {
+  background: rgba(18, 14, 8, 0.82);
+  border: 1px solid rgba(200, 170, 100, 0.15);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(16px);
+}
+
+.address-label {
+  font-size: 12px;
+  color: #8a7a5a;
+  margin-bottom: 6px;
+}
+.address-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(25, 20, 10, 0.7);
+  border: 1px solid rgba(200, 170, 100, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  word-break: break-all;
+  color: #c9b87a;
+}
+.address-box:hover {
+  border-color: rgba(200, 170, 100, 0.35);
+}
+.address-hint {
+  font-size: 11px;
+  color: #8a7a5a;
+  margin-top: 6px;
+}
+.qr-section {
+  margin: 16px 0;
+  text-align: center;
+}
+.qr-image {
+  border-radius: 8px;
+}
+.backup-warning {
+  font-size: 11px;
+  color: #d4a853;
+  margin-top: 8px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #8a7a5a;
+  margin-bottom: 4px;
+}
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  background: rgba(25, 20, 10, 0.7);
+  border: 1px solid rgba(200, 170, 100, 0.2);
+  border-radius: 8px;
+  color: #d0c8a0;
+  font-size: 14px;
+  outline: none;
+}
+.form-group input:focus {
+  border-color: #c9a24a;
+  box-shadow: 0 0 12px rgba(200, 170, 80, 0.15);
+}
+.amount-helpers {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.amount-helpers button {
+  padding: 4px 10px;
+  background: rgba(25, 20, 10, 0.6);
+  border: 1px solid rgba(200, 170, 100, 0.15);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #8a7a5a;
+  cursor: pointer;
+}
+.amount-helpers button:hover {
+  border-color: rgba(200, 170, 100, 0.35);
+  color: #c9b87a;
+}
+
+.wallet-page .btn-primary {
+  background: linear-gradient(135deg, #b8964e, #d4a853);
+  color: #1a1205;
+  border-color: #c9a24a;
+  font-weight: 600;
+}
+.wallet-page .btn-primary:hover {
+  filter: brightness(1.15);
+}
+.wallet-page .btn-secondary {
+  border-color: rgba(200, 170, 100, 0.3);
+  color: #c9b87a;
+  background: transparent;
+}
+.wallet-page .btn-secondary:hover {
+  background: rgba(200, 170, 100, 0.08);
+}
+.wallet-page .btn-tiny {
+  background: rgba(25, 20, 10, 0.6);
+  border-color: rgba(200, 170, 100, 0.15);
+  color: #8a7a5a;
+}
+
+.wallet-message {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.wallet-message.success {
+  background: rgba(74, 222, 128, 0.08);
+  color: #6dd8b0;
+  border: 1px solid rgba(74, 222, 128, 0.15);
+}
+.wallet-message.error {
+  background: rgba(220, 80, 80, 0.08);
+  color: #e87070;
+  border: 1px solid rgba(220, 80, 80, 0.15);
+}
+.wallet-message.info {
+  background: rgba(200, 170, 100, 0.08);
+  color: #c9b87a;
+  border: 1px solid rgba(200, 170, 100, 0.15);
+}
+
+.wallet-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-size: 12px;
+  color: #8a7a5a;
+}
+
+/* ============================================================================
+   BUY BSV TAB — warm gold vault palette
+   ============================================================================ */
+
+.buy-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.buy-header h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #e8d5a3;
+}
+.buy-subtitle {
+  font-size: 12px;
+  color: #8a7a5a;
+  line-height: 1.5;
+}
+
+.buy-rate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(200, 170, 80, 0.08);
+  border: 1px solid rgba(200, 170, 80, 0.2);
+  font-size: 13px;
+  color: #a0906a;
+}
+.buy-rate strong {
+  color: #e8d5a3;
+}
+
+.buy-amount-section label {
+  font-size: 12px;
+  color: #8a7a5a;
+  margin-bottom: 6px;
+  display: block;
+}
+.buy-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.buy-amount-row input {
+  width: 80px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: 1px solid rgba(200, 170, 100, 0.2);
+  background: rgba(25, 20, 10, 0.7);
+  color: #e8d5a3;
+}
+.buy-amount-row input:focus {
+  border-color: #c9a24a;
+  outline: none;
+}
+.buy-estimate {
+  font-size: 12px;
+  color: #a0906a;
+}
+
+.buy-presets {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.buy-preset {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  background: rgba(25, 20, 10, 0.5);
+  border: 1px solid rgba(200, 170, 100, 0.15);
+  color: #8a7a5a;
+  transition: all 0.15s;
+}
+.buy-preset:hover,
+.buy-preset.active {
+  background: rgba(200, 170, 80, 0.12);
+  color: #e8d5a3;
+  border-color: rgba(200, 170, 80, 0.4);
+}
+
+.buy-methods h4,
+.buy-instructions h4 {
+  font-size: 13px;
+  color: #a0906a;
+  margin-bottom: 8px;
+}
+
+.pay-method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: rgba(25, 20, 10, 0.5);
+  border: 1px solid rgba(200, 170, 100, 0.1);
+  transition: background 0.15s;
+}
+.pay-method:hover {
+  background: rgba(35, 28, 14, 0.6);
+}
+.pay-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.pay-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pay-details strong {
+  font-size: 13px;
+  color: #e8d5a3;
+}
+.pay-handle {
+  font-size: 12px;
+  color: #c9a24a;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.pay-handle:hover {
+  color: #e8d5a3;
+}
+
+.buy-instructions ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #8a7a5a;
+  line-height: 1.8;
+}
+.buy-instructions strong {
+  color: #e8d5a3;
+}
+
+.wallet-addr-code {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(200, 170, 80, 0.06);
+  border-radius: 4px;
+  font-size: 10px;
+  color: #c9a24a;
+  cursor: pointer;
+  word-break: break-all;
+  font-family: monospace;
+  border: 1px solid rgba(200, 170, 80, 0.12);
+}
+.wallet-addr-code:hover {
+  background: rgba(200, 170, 80, 0.12);
+  color: #e8d5a3;
+}
+
+.buy-disclaimer {
+  font-size: 11px;
+  color: #a0906a;
+  padding: 8px 12px;
+  background: rgba(180, 120, 40, 0.08);
+  border: 1px solid rgba(180, 120, 40, 0.2);
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+/* Stablecoin section — gold vault palette */
+.crypto-methods {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(200, 170, 100, 0.12);
+}
+.crypto-subtitle {
+  font-size: 11px;
+  color: #8a7a5a;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.crypto-method .pay-handle {
+  font-size: 10px;
+  word-break: break-all;
+  font-family: monospace;
+}
+.network-tag {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 6px;
+  background: rgba(200, 170, 80, 0.08);
+  border-radius: 3px;
+  font-size: 9px;
+  color: #a0906a;
+  letter-spacing: 0.3px;
+}
+
+.crypto-note {
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 11px;
+  background: rgba(200, 170, 80, 0.06);
+  border: 1px solid rgba(200, 170, 80, 0.15);
+  border-radius: 6px;
+  color: #8a7a5a;
+  line-height: 1.5;
+}
+.crypto-note strong {
+  color: #e8d5a3;
+}
+.no-history {
+  text-align: center;
+  color: #8a7a5a;
+  padding: 20px 0;
+}
+.no-history a {
+  color: #c9a24a;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 800px) {
+  .floating-bar {
+    padding: 8px 12px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .econ-item {
+    padding: 0 8px;
+  }
+  .econ-val {
+    font-size: 11px;
+  }
+  .badge-name {
+    font-size: 12px;
+  }
+  .moves-row .move-list {
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 500px) {
+  .connect-card {
+    width: min(380px, 90vw);
+    height: min(380px, 90vw);
+    padding: 32px 24px;
+  }
+  .connect-card .game-logo {
+    font-size: 32px;
+  }
+  .connect-card .game-title {
+    font-size: 18px;
+  }
+  .connect-card .game-description {
+    font-size: 10px;
+    max-width: 240px;
+  }
+  .connect-card .pin-input-group {
+    max-width: 230px;
+  }
+  .connect-card .pin-input {
+    font-size: 18px;
+    padding: 10px;
+  }
+  .connect-card .btn-primary,
+  .connect-card .btn-secondary {
+    max-width: 230px;
+    font-size: 12px;
+  }
+  .connect-card .security-notice {
+    max-width: 240px;
+    font-size: 9px;
+  }
+  .connect-card .connect-divider,
+  .connect-card .import-group {
+    max-width: 230px;
+  }
+
+  .floating-bar {
+    left: 6px;
+    right: 6px;
+  }
+  .floating-bar.top-bar {
+    top: 6px;
+  }
+  .floating-bar.bottom-bar {
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    transform: none;
+    width: auto;
+    max-width: none;
+  }
+  .econ-strip {
+    gap: 0;
+  }
+  .econ-item {
+    padding: 0 6px;
+  }
+  .econ-label {
+    font-size: 8px;
+  }
+  .econ-val {
+    font-size: 10px;
+  }
+  .turn-pill {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+  .moves-row .move-list {
+    max-width: 200px;
+  }
+}
